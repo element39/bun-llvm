@@ -1,5 +1,5 @@
 # 🍔 bun-llvm
-> ` use LLVM with bun effortlessly`
+> ` use LLVM with bun effortlessly `
 
 ```ts
 import LLVM from "./llvm";
