@@ -1,48 +1,53 @@
 import {
 	LLVMAddFunction,
 	LLVMAppendBasicBlockInContext,
-	LLVMBuildAdd,
-	LLVMBuildAlloca,
-	LLVMBuildBr,
-	LLVMBuildCondBr,
-	LLVMBuildFDiv,
-	LLVMBuildLoad,
-	LLVMBuildMul,
-	LLVMBuildRet,
-	LLVMBuildSDiv,
-	LLVMBuildStore,
-	LLVMBuildSub,
-	LLVMBuildUDiv,
-	LLVMConstInt,
-	LLVMConstReal,
-	LLVMContextCreate,
-	LLVMCreateBuilderInContext,
-	LLVMDoubleTypeInContext,
-	LLVMFloatTypeInContext,
-	LLVMFunctionType,
-	LLVMGetParam,
-	LLVMInt16TypeInContext,
-	LLVMInt1TypeInContext,
-	LLVMInt32TypeInContext,
-	LLVMInt64TypeInContext,
-	LLVMInt8TypeInContext,
-	LLVMModuleCreateWithNameInContext,
+import {
+  LLVMAddFunction,
+  LLVMAppendBasicBlockInContext,
+  LLVMBuildAdd,
+  LLVMBuildAlloca,
+  LLVMBuildBr,
+  LLVMBuildCondBr,
+  LLVMBuildFDiv,
+  LLVMBuildFAdd,
+  LLVMBuildFSub,
+  LLVMBuildFMul,
+  LLVMBuildLoad,
+  LLVMBuildMul,
+  LLVMBuildRet,
+  LLVMBuildSDiv,
+  LLVMBuildStore,
+  LLVMBuildSub,
+  LLVMBuildUDiv,
+  LLVMConstInt,
+  LLVMConstReal,
+  LLVMContextCreate,
+  LLVMCreateBuilderInContext,
+  LLVMDoubleTypeInContext,
+  LLVMFloatTypeInContext,
+  LLVMFunctionType,
+  LLVMGetParam,
+  LLVMInt16TypeInContext,
+  LLVMInt1TypeInContext,
+  LLVMInt32TypeInContext,
+  LLVMInt64TypeInContext,
+  LLVMInt8TypeInContext,
+  LLVMModuleCreateWithNameInContext,
+  LLVMPointerType,
+  LLVMPositionBuilderAtEnd,
+  LLVMPrintModuleToString,
+  LLVMVerifyFunction,
+  LLVMVerifyModule,
+  LLVMVoidTypeInContext,
+  LLVMTypeOf,
+  LLVMGetIntTypeWidth
+} from "./ffi";
 	LLVMPointerType,
 	LLVMPositionBuilderAtEnd,
 	LLVMPrintModuleToString,
-	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
 	LLVMVoidTypeInContext
-} from "./ffi";
-
-type Pointer = any;
-
-export enum Linkage {
-	External = 0,
-	Internal = 1,
-}
-
 /**
  context for llvm objects
 */
@@ -89,6 +94,36 @@ export class Module {
 	createFunction(name: string, fnType: FunctionType, opts?: { linkage?: Linkage }): Func {
 		const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
 		const func = new Func(fnPtr, this);
+	/**
+	 floating point add
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	*/
+	fadd(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFAdd(this.ptr, a.handle, b.handle, Buffer.from("faddtmp\0")));
+	}
+
+	/**
+	 floating point subtract
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	*/
+	fsub(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFSub(this.ptr, a.handle, b.handle, Buffer.from("fsubtmp\0")));
+	}
+
+	/**
+	 floating point multiply
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	*/
+	fmul(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFMul(this.ptr, a.handle, b.handle, Buffer.from("fmultmp\0")));
+	}
+
 		(func as any)._paramCount = (fnType as any)._paramCount ?? (fnType as any).paramCount ?? (fnType as any).params?.length ?? 2;
 		return func;
 	}
