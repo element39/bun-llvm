@@ -4,6 +4,7 @@ import {
 	LLVMBuildAdd,
 	LLVMBuildAlloca,
 	LLVMBuildBr,
+	LLVMBuildCall2,
 	LLVMBuildCondBr,
 	LLVMBuildFAdd,
 	LLVMBuildFDiv,
@@ -24,6 +25,7 @@ import {
 	LLVMFloatTypeInContext,
 	LLVMFunctionType,
 	LLVMGetIntTypeWidth,
+	LLVMGetNamedFunction,
 	LLVMGetParam,
 	LLVMInt16TypeInContext,
 	LLVMInt1TypeInContext,
@@ -37,7 +39,7 @@ import {
 	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
-	LLVMVoidTypeInContext
+	LLVMVoidTypeInContext,
 } from "./ffi";
 
 type Pointer = any;
@@ -90,12 +92,12 @@ export class Module {
 	 @param opts options
 	 @returns the function object
 	*/
-	createFunction(name: string, fnType: FunctionType, opts?: { linkage?: Linkage }): Func {
-		const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
-		const func = new Func(fnPtr, this);
-		(func as any)._paramCount = fnType.params.length;
-		return func;
-	}
+  createFunction(name: string, fnType: FunctionType, opts?: { linkage?: Linkage }): Func {
+	const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
+	const func = new Func(fnPtr, this, fnType);
+	(func as any)._paramCount = fnType.params.length;
+	return func;
+  }
 
 	/**
 	 check if the module is valid
@@ -121,6 +123,17 @@ export class Module {
 	 get the context
 	*/
 	getContext() { return this.context; }
+
+	/**
+	 get a function by name
+	 @param name function name
+	 @returns the function object or undefined if not found
+	*/
+	getFunction(name: string): Func | undefined {
+		const fnPtr = LLVMGetNamedFunction(this.ptr, Buffer.from(name + "\0"));
+		if (!fnPtr) return undefined;
+		return new Func(fnPtr, this);
+	}
 }
 
 /**
@@ -158,18 +171,20 @@ export class FunctionType {
  represents a function in the module
 */
 export class Func {
-	private ptr: Pointer;
-	private module: Module;
+private ptr: Pointer;
+private module: Module;
+public type?: FunctionType;
 
 	/**
 	 create a function object
 	 @param ptr pointer to the function
 	 @param module parent module
 	*/
-	constructor(ptr: Pointer, module: Module) {
-		this.ptr = ptr;
-		this.module = module;
-	}
+  constructor(ptr: Pointer, module: Module, type?: FunctionType) {
+	this.ptr = ptr;
+	this.module = module;
+	this.type = type;
+  }
 
 	/**
 	 add a basic block to the function
@@ -235,6 +250,24 @@ export class BasicBlock {
 }
 
 export class IRBuilder {
+
+	/**
+	 call a function with arguments
+	 @param fn the function to call
+	 @param args array of argument values
+	 @param name optional result name
+	 @returns the result value
+	*/
+  call(fn: Func, args: Value[], name = "calltmp"): Value {
+	const argPtrs = Buffer.allocUnsafe(args.length * 8);
+	for (let i = 0; i < args.length; ++i) {
+	  argPtrs.writeBigUInt64LE(BigInt(args[i].handle), i * 8);
+	}
+	if (!fn.type) throw new Error("Func.type is required for IRBuilder.call");
+	const fnType = fn.type.handle;
+	const valPtr = LLVMBuildCall2(this.ptr, fnType, fn.handle, argPtrs, args.length, Buffer.from(name + "\0"));
+	return new Value(valPtr);
+  }
 	private ptr: Pointer;
 
 	constructor(context: Context) {

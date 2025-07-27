@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import LLVM, { Context, IRBuilder, Module, Type, Value } from './index'
 
-// basic context and module creation
 describe('llvm-bun', () => {
 	it('creates a context and module', () => {
 		const ctx = new Context()
@@ -79,47 +78,85 @@ describe('llvm-bun', () => {
 		const loaded = builder.load(ptr)
 		expect(loaded.handle).toBeTruthy()
 	})
-  it('builds integer and float arithmetic', () => {
-	const ctx = new Context()
-	const mod = new Module('arith', ctx)
-	const fnType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx), Type.double(ctx), Type.double(ctx)], Type.void(ctx))
-	const fn = mod.createFunction('arith', fnType)
-	const entry = fn.addBlock('entry')
-	const builder = new IRBuilder(ctx)
-	builder.insertInto(entry)
-	const [a, b, x, y] = fn.getArgs()
-	// integer ops
-	const add = builder.add(a, b)
-	const sub = builder.sub(a, b)
-	const mul = builder.mul(a, b)
-	const sdiv = builder.sdiv(a, b)
-	const udiv = builder.udiv(a, b)
-	// float ops
-	const fadd = builder.fadd(x, y)
-	const fsub = builder.fsub(x, y)
-	const fmul = builder.fmul(x, y)
-	const fdiv = builder.fdiv(x, y)
-	// check handles
-	expect(add.handle).toBeTruthy()
-	expect(sub.handle).toBeTruthy()
-	expect(mul.handle).toBeTruthy()
-	expect(sdiv.handle).toBeTruthy()
-	expect(udiv.handle).toBeTruthy()
-	expect(fadd.handle).toBeTruthy()
-	expect(fsub.handle).toBeTruthy()
-	expect(fmul.handle).toBeTruthy()
-	expect(fdiv.handle).toBeTruthy()
-	// check ir
-	builder.ret()
-	const ir = mod.toString()
-	expect(ir).toMatch(/add i32/)
-	expect(ir).toMatch(/sub i32/)
-	expect(ir).toMatch(/mul i32/)
-	expect(ir).toMatch(/sdiv i32/)
-	expect(ir).toMatch(/udiv i32/)
-	expect(ir).toMatch(/fadd double/)
-	expect(ir).toMatch(/fsub double/)
-	expect(ir).toMatch(/fmul double/)
-	expect(ir).toMatch(/fdiv double/)
-  })
+	it('builds integer and float arithmetic', () => {
+		const ctx = new Context()
+		const mod = new Module('arith', ctx)
+		const fnType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx), Type.double(ctx), Type.double(ctx)], Type.void(ctx))
+		const fn = mod.createFunction('arith', fnType)
+		const entry = fn.addBlock('entry')
+		const builder = new IRBuilder(ctx)
+		builder.insertInto(entry)
+		const [a, b, x, y] = fn.getArgs()
+
+		const add = builder.add(a, b)
+		const sub = builder.sub(a, b)
+		const mul = builder.mul(a, b)
+		const sdiv = builder.sdiv(a, b)
+		const udiv = builder.udiv(a, b)
+
+		const fadd = builder.fadd(x, y)
+		const fsub = builder.fsub(x, y)
+		const fmul = builder.fmul(x, y)
+		const fdiv = builder.fdiv(x, y)
+
+		expect(add.handle).toBeTruthy()
+		expect(sub.handle).toBeTruthy()
+		expect(mul.handle).toBeTruthy()
+		expect(sdiv.handle).toBeTruthy()
+		expect(udiv.handle).toBeTruthy()
+		expect(fadd.handle).toBeTruthy()
+		expect(fsub.handle).toBeTruthy()
+		expect(fmul.handle).toBeTruthy()
+		expect(fdiv.handle).toBeTruthy()
+
+		builder.ret()
+		const ir = mod.toString()
+		expect(ir).toMatch(/add i32/)
+		expect(ir).toMatch(/sub i32/)
+		expect(ir).toMatch(/mul i32/)
+		expect(ir).toMatch(/sdiv i32/)
+		expect(ir).toMatch(/udiv i32/)
+		expect(ir).toMatch(/fadd double/)
+		expect(ir).toMatch(/fsub double/)
+		expect(ir).toMatch(/fmul double/)
+		expect(ir).toMatch(/fdiv double/)
+	})
+	it('gets a function by name', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([Type.int32(ctx)], Type.int32(ctx));
+		const fn = mod.createFunction('myfunc', fnType);
+		const found = mod.getFunction('myfunc');
+		expect(found).toBeTruthy();
+		expect(found?.handle).toBe(fn.handle);
+		const notFound = mod.getFunction('does_not_exist');
+		expect(notFound).toBeUndefined();
+	});
+	it('calls a function with builder.call', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+
+		const fnType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx)], Type.int32(ctx));
+		const foo = mod.createFunction('foo', fnType);
+		const fooEntry = foo.addBlock('entry');
+		const builder = new IRBuilder(ctx);
+		builder.insertInto(fooEntry);
+		const [x, y] = foo.getArgs();
+		const sum = builder.add(x, y);
+		builder.ret(sum);
+
+		const barType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx)], Type.int32(ctx));
+		const bar = mod.createFunction('bar', barType);
+		const barEntry = bar.addBlock('entry');
+		builder.insertInto(barEntry);
+		const [a, b] = bar.getArgs();
+
+		const callResult = builder.call(foo, [a, b], 'calltmp');
+		builder.ret(callResult);
+
+		const ir = mod.toString();
+		expect(ir).toMatch(/call i32 @foo/);
+		expect(ir).toMatch(/define i32 @bar/);
+		expect(ir).toMatch(/define i32 @foo/);
+	});
 })

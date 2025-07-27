@@ -1,6 +1,8 @@
 import { dlopen } from "bun:ffi";
 
 const lib = dlopen("./LLVM-C.dll", {
+  LLVMBuildCall2: { args: ["ptr", "ptr", "ptr", "ptr", "uint32_t", "cstring"], returns: "ptr" },
+  LLVMGetNamedFunction: { args: ["ptr", "cstring"], returns: "ptr" },
 
 	// context & module
 	LLVMContextCreate: { args: [], returns: "ptr" },
@@ -105,5 +107,7 @@ export const {
 	LLVMBuildAlloca,
 	LLVMBuildStore,
 	LLVMBuildLoad
+  ,LLVMGetNamedFunction
+  ,LLVMBuildCall2
 } = lib.symbols;
 
