@@ -2,12 +2,15 @@ import {
 	LLVMAddFunction,
 	LLVMAppendBasicBlockInContext,
 	LLVMBuildAdd,
+	LLVMBuildAlloca,
 	LLVMBuildBr,
 	LLVMBuildCondBr,
 	LLVMBuildFDiv,
+	LLVMBuildLoad,
 	LLVMBuildMul,
 	LLVMBuildRet,
 	LLVMBuildSDiv,
+	LLVMBuildStore,
 	LLVMBuildSub,
 	LLVMBuildUDiv,
 	LLVMConstInt,
@@ -240,6 +243,35 @@ export class IRBuilder {
 	}
 
 	/**
+	 allocate memory on the stack
+	 @param type the type to allocate
+	 @param name variable name
+	 @returns a pointer to the allocated memory
+	 */
+	alloca(type: Type, name = "alloca"): Value {
+		return new Value(LLVMBuildAlloca(this.ptr, type.handle, Buffer.from(name + "\0")));
+	}
+
+	/**
+	 store a value in memory
+	 @param value the value to store
+	 @param ptr the pointer to store to
+	 */
+	store(value: Value, ptr: Value): void {
+		LLVMBuildStore(this.ptr, value.handle, ptr.handle);
+	}
+
+	/**
+	 load a value from memory
+	 @param ptr the pointer to load from
+	 @param name variable name
+	 @returns the loaded value
+	 */
+	load(ptr: Value, name = "load"): Value {
+		return new Value(LLVMBuildLoad(this.ptr, ptr.handle, Buffer.from(name + "\0")));
+	}
+
+	/**
 	 add two values
 	 @param a first value
 	 @param b second value
@@ -419,7 +451,7 @@ export class Value {
 		const typeName = type.constructor.name.toLowerCase();
 		if (typeName.includes('uint')) isSigned = false;
 		if (isSignedOverride !== undefined) isSigned = isSignedOverride;
-		
+
 		return new Value(LLVMConstInt(type.handle, BigInt(value), isSigned));
 	}
 
