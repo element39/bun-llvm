@@ -25,7 +25,6 @@ import {
 	LLVMFloatTypeInContext,
 	LLVMFunctionType,
 	LLVMGetIntTypeWidth,
-	LLVMGetNamedFunction,
 	LLVMGetParam,
 	LLVMInt16TypeInContext,
 	LLVMInt1TypeInContext,
@@ -39,7 +38,7 @@ import {
 	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
-	LLVMVoidTypeInContext,
+	LLVMVoidTypeInContext
 } from "./ffi";
 
 type Pointer = any;
@@ -72,8 +71,9 @@ export class Context {
  module holds functions and global data
 */
 export class Module {
-	private ptr: Pointer;
-	private context: Context;
+private ptr: Pointer;
+private context: Context;
+private _funcs: Map<string, Func> = new Map();
 
 	/**
 	 create a new module
@@ -96,6 +96,7 @@ export class Module {
 	const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
 	const func = new Func(fnPtr, this, fnType);
 	(func as any)._paramCount = fnType.params.length;
+	this._funcs.set(name, func);
 	return func;
   }
 
@@ -129,11 +130,9 @@ export class Module {
 	 @param name function name
 	 @returns the function object or undefined if not found
 	*/
-	getFunction(name: string): Func | undefined {
-		const fnPtr = LLVMGetNamedFunction(this.ptr, Buffer.from(name + "\0"));
-		if (!fnPtr) return undefined;
-		return new Func(fnPtr, this);
-	}
+  getFunction(name: string): Func | undefined {
+	return this._funcs.get(name);
+  }
 }
 
 /**

@@ -159,4 +159,13 @@ describe('llvm-bun', () => {
 		expect(ir).toMatch(/define i32 @bar/);
 		expect(ir).toMatch(/define i32 @foo/);
 	});
+	it('getFunction returns the same Func instance and preserves type', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx)], Type.int32(ctx));
+		const fn = mod.createFunction('sum', fnType);
+		const found = mod.getFunction('sum');
+		expect(found).toBe(fn);
+		expect(found?.type).toBe(fnType);
+	});
 })
