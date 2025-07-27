@@ -30,6 +30,7 @@ import {
 	LLVMPointerType,
 	LLVMPositionBuilderAtEnd,
 	LLVMPrintModuleToString,
+	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
 	LLVMVoidTypeInContext
@@ -372,6 +373,40 @@ export class IRBuilder {
 		if (bitWidth !== undefined) this.bitWidth = bitWidth;
 	}
 
+  /**
+   create a Type from a raw pointer (internal use)
+   tries to infer kind/bitWidth for int/float/double/pointer/void
+   */
+  static fromRaw(ptr: Pointer): Type {
+	// try to match against known singleton type pointers
+	const ctx = new Context();
+	const known = [
+	  { t: Type.int1(ctx), kind: "int1", bitWidth: 1 },
+	  { t: Type.int8(ctx), kind: "int8", bitWidth: 8 },
+	  { t: Type.int16(ctx), kind: "int16", bitWidth: 16 },
+	  { t: Type.int32(ctx), kind: "int32", bitWidth: 32 },
+	  { t: Type.int64(ctx), kind: "int64", bitWidth: 64 },
+	  { t: Type.float(ctx), kind: "float" },
+	  { t: Type.double(ctx), kind: "double" },
+	  { t: Type.void(ctx), kind: "void" },
+	];
+	for (const k of known) {
+	  if (k.t.handle === ptr) return new Type(ptr, k.kind, k.bitWidth);
+	}
+	// fallback: try to detect int types by bit width using the C API
+	// this requires an FFI binding for LLVMGetIntTypeWidth
+	try {
+	  // @ts-ignore
+	  const { LLVMGetIntTypeWidth } = require('./ffi');
+	  const width = LLVMGetIntTypeWidth(ptr);
+	  if (typeof width === 'number' && width > 0) {
+		return new Type(ptr, `int${width}`, width);
+	  }
+	} catch {}
+	// fallback: pointer type
+	return new Type(ptr, "unknown");
+  }
+
 	/**
 	 get i1 type
 	*/
@@ -521,6 +556,13 @@ export class Value {
 	 */
 	static constFloat(type: Type, value: number): Value {
 		return new Value(LLVMConstReal(type.handle, value));
+	}
+
+	/**
+	 get the type of this value
+	*/
+	getType(): Type {
+		return Type.fromRaw(LLVMTypeOf(this.ptr));
 	}
 
 	/**
