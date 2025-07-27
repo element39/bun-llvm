@@ -9,7 +9,7 @@ const lib = dlopen("./LLVM-C.dll", {
 
 	// types
 	LLVMInt1TypeInContext: { args: ["ptr"], returns: "ptr" },
-	
+
 	LLVMInt8TypeInContext: { args: ["ptr"], returns: "ptr" },
 	LLVMInt16TypeInContext: { args: ["ptr"], returns: "ptr" },
 	LLVMInt32TypeInContext: { args: ["ptr"], returns: "ptr" },
@@ -30,7 +30,14 @@ const lib = dlopen("./LLVM-C.dll", {
 	// ir building
 	LLVMPositionBuilderAtEnd: { args: ["ptr", "ptr"], returns: "void" },
 	LLVMBuildAdd: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMBuildSub: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMBuildMul: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMBuildSDiv: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMBuildUDiv: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMBuildFDiv: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
 	LLVMBuildRet: { args: ["ptr", "ptr"], returns: "ptr" },
+	LLVMBuildBr: { args: ["ptr", "ptr"], returns: "ptr" },
+	LLVMBuildCondBr: { args: ["ptr", "ptr", "ptr", "ptr"], returns: "ptr" },
 
 	// utils
 	LLVMPrintModuleToString: { args: ["ptr"], returns: "cstring" },
@@ -39,7 +46,6 @@ const lib = dlopen("./LLVM-C.dll", {
 
 });
 
-// export ffi symbols
 export const {
 	LLVMContextCreate,
 	LLVMModuleCreateWithNameInContext,
@@ -59,11 +65,20 @@ export const {
 	LLVMAddFunction,
 	LLVMAppendBasicBlockInContext,
 	LLVMGetParam,
+	LLVMBuildRet,
+	
+	LLVMBuildAdd,
+	LLVMBuildSub,
+
+	LLVMBuildMul,
+	LLVMBuildSDiv,
+	LLVMBuildUDiv,
+	LLVMBuildFDiv,
+	
+	LLVMBuildBr,
+	LLVMBuildCondBr,
 
 	LLVMPositionBuilderAtEnd,
-	LLVMBuildAdd,
-	LLVMBuildRet,
-
 	LLVMPrintModuleToString,
 	LLVMVerifyFunction,
 	LLVMVerifyModule

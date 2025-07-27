@@ -1,6 +1,24 @@
 {
-  "dependencies": {},
+  "name": "bun-llvm",
+  "version": "0.0.2",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "bun run build"
+  },
   "devDependencies": {
-    "@types/bun": "^1.2.19"
+    "@types/bun": "latest",
+    "esbuild": "^0.25.8",
+    "vitest": "^3.2.4"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }
