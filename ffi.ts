@@ -39,6 +39,10 @@ const lib = dlopen("./LLVM-C.dll", {
 	LLVMBuildBr: { args: ["ptr", "ptr"], returns: "ptr" },
 	LLVMBuildCondBr: { args: ["ptr", "ptr", "ptr", "ptr"], returns: "ptr" },
 
+	// constants
+	LLVMConstInt: { args: ["ptr", "uint64_t", "bool"], returns: "ptr" },
+	LLVMConstReal: { args: ["ptr", "double"], returns: "ptr" },
+
 	// utils
 	LLVMPrintModuleToString: { args: ["ptr"], returns: "cstring" },
 	LLVMVerifyFunction: { args: ["ptr", "uint32_t"], returns: "int" },
@@ -81,6 +85,9 @@ export const {
 	LLVMPositionBuilderAtEnd,
 	LLVMPrintModuleToString,
 	LLVMVerifyFunction,
-	LLVMVerifyModule
+	LLVMVerifyModule,
+
+	LLVMConstInt,
+	LLVMConstReal
 } = lib.symbols;
 

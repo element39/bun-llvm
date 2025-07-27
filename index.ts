@@ -10,6 +10,8 @@ import {
 	LLVMBuildSDiv,
 	LLVMBuildSub,
 	LLVMBuildUDiv,
+	LLVMConstInt,
+	LLVMConstReal,
 	LLVMContextCreate,
 	LLVMCreateBuilderInContext,
 	LLVMDoubleTypeInContext,
@@ -405,6 +407,30 @@ export class Value {
 	 @param ptr pointer to the value
 	*/
 	constructor(ptr: Pointer) { this.ptr = ptr; }
+
+	/**
+	 create an integer constant
+	 @param type the integer type
+	 @param value the value
+	 @param isSignedOverride whether to treat the value as signed (optional), llvm-bun tries to infer
+	 */
+	static constInt(type: Type, value: number | bigint, isSignedOverride?: boolean): Value {
+		let isSigned = true;
+		const typeName = type.constructor.name.toLowerCase();
+		if (typeName.includes('uint')) isSigned = false;
+		if (isSignedOverride !== undefined) isSigned = isSignedOverride;
+		
+		return new Value(LLVMConstInt(type.handle, BigInt(value), isSigned));
+	}
+
+	/**
+	 create a floating point constant
+	 @param type the float type
+	 @param value the value
+	 */
+	static constFloat(type: Type, value: number): Value {
+		return new Value(LLVMConstReal(type.handle, value));
+	}
 
 	/**
 	 get the raw pointer
