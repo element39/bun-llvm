@@ -361,71 +361,130 @@ export class IRBuilder {
 /**
  represents a type in llvm
 */
-export class Type {
+	export class Type {
 	private ptr: Pointer;
-	private constructor(ptr: Pointer) { this.ptr = ptr; }
+	private kind: string;
+	private bitWidth?: number;
+
+	private constructor(ptr: Pointer, kind: string, bitWidth?: number) {
+		this.ptr = ptr;
+		this.kind = kind;
+		if (bitWidth !== undefined) this.bitWidth = bitWidth;
+	}
 
 	/**
 	 get i1 type
 	*/
 	static int1(context: Context): Type {
-		return new Type(LLVMInt1TypeInContext(context.handle));
+		return new Type(LLVMInt1TypeInContext(context.handle), "int1", 1);
 	}
+
 	/**
 	 get i8 type
 	*/
 	static int8(context: Context): Type {
-		return new Type(LLVMInt8TypeInContext(context.handle));
+		return new Type(LLVMInt8TypeInContext(context.handle), "int8", 8);
 	}
+
 	/**
 	 get i16 type
 	*/
 	static int16(context: Context): Type {
-		return new Type(LLVMInt16TypeInContext(context.handle));
+		return new Type(LLVMInt16TypeInContext(context.handle), "int16", 16);
 	}
+
 	/**
 	 get i32 type
 	*/
 	static int32(context: Context): Type {
-		return new Type(LLVMInt32TypeInContext(context.handle));
+		return new Type(LLVMInt32TypeInContext(context.handle), "int32", 32);
 	}
+
 	/**
 	 get i64 type
 	*/
 	static int64(context: Context): Type {
-		return new Type(LLVMInt64TypeInContext(context.handle));
+		return new Type(LLVMInt64TypeInContext(context.handle), "int64", 64);
 	}
+	/**
+	 get the bit width for integer types (returns undefined for non-integer types)
+	*/
+	getBitWidth(): number | undefined {
+		return this.bitWidth;
+	}
+
 	/**
 	 get float type
 	*/
 	static float(context: Context): Type {
-		return new Type(LLVMFloatTypeInContext(context.handle));
+		return new Type(LLVMFloatTypeInContext(context.handle), "float");
 	}
+
 	/**
 	 get double type
 	*/
 	static double(context: Context): Type {
-		return new Type(LLVMDoubleTypeInContext(context.handle));
+		return new Type(LLVMDoubleTypeInContext(context.handle), "double");
 	}
+
 	/**
 	 get void type
 	*/
 	static void(context: Context): Type {
-		return new Type(LLVMVoidTypeInContext(context.handle));
+		return new Type(LLVMVoidTypeInContext(context.handle), "void");
 	}
+
 	/**
 	 get pointer type
 	 @param elementType type to point to
 	 @param addressSpace address space
 	*/
 	static pointer(elementType: Type, addressSpace = 0): Type {
-		return new Type(LLVMPointerType(elementType.handle, addressSpace));
+		return new Type(LLVMPointerType(elementType.handle, addressSpace), "pointer");
 	}
 
 	/**
 	 get the raw pointer
 	*/
 	get handle() { return this.ptr; }
+
+	/**
+	 check if this is an integer type, optionally with a specific bit width
+	 @param width optional bit width to check
+	*/
+	isInt(width?: number): boolean {
+		if (!this.kind.startsWith("int")) return false;
+		if (width !== undefined) return this.bitWidth === width;
+		return true;
+	}
+
+	/**
+	 check if this is a float type
+	*/
+	isFloat(): boolean {
+		return this.kind === "float";
+	}
+
+	/**
+	 check if this is a double type
+	*/
+	isDouble(): boolean {
+		return this.kind === "double";
+	}
+
+	/**
+	 check if this is a pointer type
+	*/
+	isPointer(): boolean {
+		return this.kind === "pointer";
+	}
+
+	/**
+	 check if this is a void type
+	*/
+	isVoid(): boolean {
+		return this.kind === "void";
+	}
 }
 
 /**
