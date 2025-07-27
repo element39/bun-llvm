@@ -1,32 +1,41 @@
-// https://www.npmjs.com/package/llvm-bindings
-import llvm from "./llvm";
+import LLVM from "./llvm";
 
-function main(): void {
-    const context = new llvm.LLVMContext();
-    const module = new llvm.Module("demo", context);
-    const builder = new llvm.IRBuilder(context);
+function main() {
+	// initialize LLVM
+	const ctx = new LLVM.Context();
+	const mod = new LLVM.Module("demo", ctx);
+	const builder = new LLVM.IRBuilder(ctx);
 
-    const returnType = builder.getInt32Ty(context);
-    const paramTypes = [builder.getInt32Ty(context), builder.getInt32Ty(context)];
-    const functionType = llvm.FunctionType.get(returnType, paramTypes, false, context);
-    const func = llvm.Function.Create(functionType, llvm.LinkageTypes.ExternalLinkage, "add", module);
+	// define types
+	const i32 = LLVM.Type.int32(ctx);
+	const fnType = new LLVM.FunctionType([i32, i32], i32);
 
-    const entryBB = llvm.BasicBlock.Create(context, "entry", func);
-    builder.setInsertPoint(entryBB);
-    const a = func.getArg(0);
-    const b = func.getArg(1);
-    const result = builder.createAdd(a, b);
-    builder.createRet(result);
+	// {} are used to separate scopes (optional)
+	{
+		// create the function
+		const fn = mod.createFunction("add", fnType, { linkage: LLVM.Linkage.External });
+		const entry = fn.addBlock("entry");
 
-    if (llvm.verifyFunction(func)) {
-        console.error("Verifying function failed");
-        return;
-    }
-    if (llvm.verifyModule(module)) {
-        console.error("Verifying module failed");
-        return;
-    }
-    console.log(module.print());
+		builder.insertInto(entry);
+		
+		{
+			// get parameters & add them
+			const [a, b] = fn.getArgs();
+			const sum = builder.add(a, b);
+			
+			// return the result
+			builder.ret(sum);
+		}
+
+		// make sure the function is valid
+		fn.verify();
+	}
+	
+	// verify the module
+	mod.verify();
+	
+	// output IR
+	console.log(mod.toString());
 }
 
 main();
