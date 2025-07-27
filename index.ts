@@ -38,7 +38,8 @@ import {
 	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
-	LLVMVoidTypeInContext
+  LLVMVoidTypeInContext,
+  LLVMBuildICmp
 } from "./ffi";
 
 type Pointer = any;
@@ -249,6 +250,55 @@ export class BasicBlock {
 }
 
 export class IRBuilder {
+
+	/**
+	 integer comparison equal (==)
+	*/
+	icmpEQ(left: Value, right: Value, name = "icmp_eq"): Value {
+		// LLVMIntEQ = 32
+		const valPtr = LLVMBuildICmp(this.ptr, 32, left.handle, right.handle, Buffer.from(name + "\0"));
+		return new Value(valPtr);
+	}
+	/**
+	 integer comparison not equal (!=)
+	*/
+	icmpNE(left: Value, right: Value, name = "icmp_ne"): Value {
+		// LLVMIntNE = 33
+		const valPtr = LLVMBuildICmp(this.ptr, 33, left.handle, right.handle, Buffer.from(name + "\0"));
+		return new Value(valPtr);
+	}
+  /**
+   integer comparison signed less than (<)
+   */
+  icmpSLT(left: Value, right: Value, name = "icmp_slt"): Value {
+	// LLVMIntSLT = 40
+	const valPtr = LLVMBuildICmp(this.ptr, 40, left.handle, right.handle, Buffer.from(name + "\0"));
+	return new Value(valPtr);
+  }
+  /**
+   integer comparison signed less or equal (<=)
+   */
+  icmpSLE(left: Value, right: Value, name = "icmp_sle"): Value {
+	// LLVMIntSLE = 41
+	const valPtr = LLVMBuildICmp(this.ptr, 41, left.handle, right.handle, Buffer.from(name + "\0"));
+	return new Value(valPtr);
+  }
+  /**
+   integer comparison signed greater than (>)
+   */
+  icmpSGT(left: Value, right: Value, name = "icmp_sgt"): Value {
+	// LLVMIntSGT = 38
+	const valPtr = LLVMBuildICmp(this.ptr, 38, left.handle, right.handle, Buffer.from(name + "\0"));
+	return new Value(valPtr);
+  }
+  /**
+   integer comparison signed greater or equal (>=)
+   */
+  icmpSGE(left: Value, right: Value, name = "icmp_sge"): Value {
+	// LLVMIntSGE = 39
+	const valPtr = LLVMBuildICmp(this.ptr, 39, left.handle, right.handle, Buffer.from(name + "\0"));
+	return new Value(valPtr);
+  }
 
 	/**
 	 call a function with arguments

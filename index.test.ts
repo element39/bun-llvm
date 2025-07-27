@@ -168,4 +168,36 @@ describe('llvm-bun', () => {
 		expect(found).toBe(fn);
 		expect(found?.type).toBe(fnType);
 	});
+	it('builds integer comparisons with icmp', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([Type.int32(ctx), Type.int32(ctx)], Type.int1(ctx));
+		const fn = mod.createFunction('cmp', fnType);
+		const entry = fn.addBlock('entry');
+		const builder = new IRBuilder(ctx);
+		builder.insertInto(entry);
+		const [a, b] = fn.getArgs();
+		const eq = builder.icmpEQ(a, b);
+		const ne = builder.icmpNE(a, b);
+		const slt = builder.icmpSLT(a, b);
+		const sle = builder.icmpSLE(a, b);
+		const sgt = builder.icmpSGT(a, b);
+		const sge = builder.icmpSGE(a, b);
+		// Check handles
+		expect(eq.handle).toBeTruthy();
+		expect(ne.handle).toBeTruthy();
+		expect(slt.handle).toBeTruthy();
+		expect(sle.handle).toBeTruthy();
+		expect(sgt.handle).toBeTruthy();
+		expect(sge.handle).toBeTruthy();
+		// Return one result to make valid IR
+		builder.ret(eq);
+		const ir = mod.toString();
+		expect(ir).toMatch(/icmp eq/);
+		expect(ir).toMatch(/icmp ne/);
+		expect(ir).toMatch(/icmp slt/);
+		expect(ir).toMatch(/icmp sle/);
+		expect(ir).toMatch(/icmp sgt/);
+		expect(ir).toMatch(/icmp sge/);
+	});
 })
