@@ -1,53 +1,52 @@
 import {
 	LLVMAddFunction,
 	LLVMAppendBasicBlockInContext,
-import {
-  LLVMAddFunction,
-  LLVMAppendBasicBlockInContext,
-  LLVMBuildAdd,
-  LLVMBuildAlloca,
-  LLVMBuildBr,
-  LLVMBuildCondBr,
-  LLVMBuildFDiv,
-  LLVMBuildFAdd,
-  LLVMBuildFSub,
-  LLVMBuildFMul,
-  LLVMBuildLoad,
-  LLVMBuildMul,
-  LLVMBuildRet,
-  LLVMBuildSDiv,
-  LLVMBuildStore,
-  LLVMBuildSub,
-  LLVMBuildUDiv,
-  LLVMConstInt,
-  LLVMConstReal,
-  LLVMContextCreate,
-  LLVMCreateBuilderInContext,
-  LLVMDoubleTypeInContext,
-  LLVMFloatTypeInContext,
-  LLVMFunctionType,
-  LLVMGetParam,
-  LLVMInt16TypeInContext,
-  LLVMInt1TypeInContext,
-  LLVMInt32TypeInContext,
-  LLVMInt64TypeInContext,
-  LLVMInt8TypeInContext,
-  LLVMModuleCreateWithNameInContext,
-  LLVMPointerType,
-  LLVMPositionBuilderAtEnd,
-  LLVMPrintModuleToString,
-  LLVMVerifyFunction,
-  LLVMVerifyModule,
-  LLVMVoidTypeInContext,
-  LLVMTypeOf,
-  LLVMGetIntTypeWidth
-} from "./ffi";
+	LLVMBuildAdd,
+	LLVMBuildAlloca,
+	LLVMBuildBr,
+	LLVMBuildCondBr,
+	LLVMBuildFAdd,
+	LLVMBuildFDiv,
+	LLVMBuildFMul,
+	LLVMBuildFSub,
+	LLVMBuildLoad,
+	LLVMBuildMul,
+	LLVMBuildRet,
+	LLVMBuildSDiv,
+	LLVMBuildStore,
+	LLVMBuildSub,
+	LLVMBuildUDiv,
+	LLVMConstInt,
+	LLVMConstReal,
+	LLVMContextCreate,
+	LLVMCreateBuilderInContext,
+	LLVMDoubleTypeInContext,
+	LLVMFloatTypeInContext,
+	LLVMFunctionType,
+	LLVMGetIntTypeWidth,
+	LLVMGetParam,
+	LLVMInt16TypeInContext,
+	LLVMInt1TypeInContext,
+	LLVMInt32TypeInContext,
+	LLVMInt64TypeInContext,
+	LLVMInt8TypeInContext,
+	LLVMModuleCreateWithNameInContext,
 	LLVMPointerType,
 	LLVMPositionBuilderAtEnd,
 	LLVMPrintModuleToString,
+	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
 	LLVMVoidTypeInContext
+} from "./ffi";
+
+type Pointer = any;
+
+export enum Linkage {
+	External = 0,
+	Internal = 1,
+}
+
 /**
  context for llvm objects
 */
@@ -94,37 +93,7 @@ export class Module {
 	createFunction(name: string, fnType: FunctionType, opts?: { linkage?: Linkage }): Func {
 		const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
 		const func = new Func(fnPtr, this);
-	/**
-	 floating point add
-	 @param a first value
-	 @param b second value
-	 @returns the result value
-	*/
-	fadd(a: Value, b: Value): Value {
-		return new Value(LLVMBuildFAdd(this.ptr, a.handle, b.handle, Buffer.from("faddtmp\0")));
-	}
-
-	/**
-	 floating point subtract
-	 @param a first value
-	 @param b second value
-	 @returns the result value
-	*/
-	fsub(a: Value, b: Value): Value {
-		return new Value(LLVMBuildFSub(this.ptr, a.handle, b.handle, Buffer.from("fsubtmp\0")));
-	}
-
-	/**
-	 floating point multiply
-	 @param a first value
-	 @param b second value
-	 @returns the result value
-	*/
-	fmul(a: Value, b: Value): Value {
-		return new Value(LLVMBuildFMul(this.ptr, a.handle, b.handle, Buffer.from("fmultmp\0")));
-	}
-
-		(func as any)._paramCount = (fnType as any)._paramCount ?? (fnType as any).paramCount ?? (fnType as any).params?.length ?? 2;
+		(func as any)._paramCount = fnType.params.length;
 		return func;
 	}
 
@@ -159,6 +128,7 @@ export class Module {
 */
 export class FunctionType {
 	private ptr: Pointer;
+	public params: Type[];
 
 	/**
 	 create a function type
@@ -167,6 +137,7 @@ export class FunctionType {
 	 @param isVarArg is variadic
 	*/
 	constructor(params: Type[], ret: Type, isVarArg = false) {
+		this.params = params;
 		const buf = Buffer.allocUnsafe(params.length * 8);
 		for (let i = 0; i < params.length; ++i) {
 			if (!params[i]) {
@@ -318,6 +289,36 @@ export class IRBuilder {
 	}
 
 	/**
+	 add two floating point values
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	 */
+	fadd(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFAdd(this.ptr, a.handle, b.handle, Buffer.from("faddtmp\0")));
+	}
+
+	/**
+	 subtract two floating point values
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	 */
+	fsub(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFSub(this.ptr, a.handle, b.handle, Buffer.from("fsubtmp\0")));
+	}
+
+	/**
+	 multiply two floating point values
+	 @param a first value
+	 @param b second value
+	 @returns the result value
+	 */
+	fmul(a: Value, b: Value): Value {
+		return new Value(LLVMBuildFMul(this.ptr, a.handle, b.handle, Buffer.from("fmultmp\0")));
+	}
+
+	/**
 	 subtract two values
 	 @param a first value
 	 @param b second value
@@ -395,9 +396,9 @@ export class IRBuilder {
 }
 
 /**
- represents a type in llvm
+represents a type in llvm
 */
-	export class Type {
+export class Type {
 	private ptr: Pointer;
 	private kind: string;
 	private bitWidth?: number;
@@ -413,7 +414,6 @@ export class IRBuilder {
    tries to infer kind/bitWidth for int/float/double/pointer/void
    */
   static fromRaw(ptr: Pointer): Type {
-	// try to match against known singleton type pointers
 	const ctx = new Context();
 	const known = [
 	  { t: Type.int1(ctx), kind: "int1", bitWidth: 1 },
@@ -425,19 +425,15 @@ export class IRBuilder {
 	  { t: Type.double(ctx), kind: "double" },
 	  { t: Type.void(ctx), kind: "void" },
 	];
+
 	for (const k of known) {
 	  if (k.t.handle === ptr) return new Type(ptr, k.kind, k.bitWidth);
 	}
-	// fallback: try to detect int types by bit width using the C API
-	// this requires an FFI binding for LLVMGetIntTypeWidth
-	try {
-	  // @ts-ignore
-	  const { LLVMGetIntTypeWidth } = require('./ffi');
-	  const width = LLVMGetIntTypeWidth(ptr);
-	  if (typeof width === 'number' && width > 0) {
+
+	const width = LLVMGetIntTypeWidth(ptr);
+	if (typeof width === 'number' && width > 0) {
 		return new Type(ptr, `int${width}`, width);
-	  }
-	} catch {}
+	}
 	// fallback: pointer type
 	return new Type(ptr, "unknown");
   }
@@ -562,12 +558,16 @@ export class IRBuilder {
 */
 export class Value {
 	private ptr: Pointer;
+	private _type?: Type;
 
 	/**
 	 create a value object
 	 @param ptr pointer to the value
 	*/
-	constructor(ptr: Pointer) { this.ptr = ptr; }
+	constructor(ptr: Pointer, type?: Type) {
+		this.ptr = ptr;
+		this._type = type;
+	}
 
 	/**
 	 create an integer constant
@@ -580,8 +580,8 @@ export class Value {
 		const typeName = type.constructor.name.toLowerCase();
 		if (typeName.includes('uint')) isSigned = false;
 		if (isSignedOverride !== undefined) isSigned = isSignedOverride;
-
-		return new Value(LLVMConstInt(type.handle, BigInt(value), isSigned));
+		const ptr = LLVMConstInt(type.handle, BigInt(value), isSigned);
+		return new Value(ptr, type);
 	}
 
 	/**
@@ -590,13 +590,15 @@ export class Value {
 	 @param value the value
 	 */
 	static constFloat(type: Type, value: number): Value {
-		return new Value(LLVMConstReal(type.handle, value));
+		const ptr = LLVMConstReal(type.handle, value);
+		return new Value(ptr, type);
 	}
 
 	/**
 	 get the type of this value
 	*/
 	getType(): Type {
+		if (this._type) return this._type;
 		return Type.fromRaw(LLVMTypeOf(this.ptr));
 	}
 

@@ -10,5 +10,6 @@
     "skipLibCheck": true,
     "sourceMap": true
   },
-  "include": ["index.ts", "llvm.ts", "ffi.ts"]
+  "include": ["index.ts", "llvm.ts", "ffi.ts"],
+  "exclude": ["dist", "node_modules"]
 }
