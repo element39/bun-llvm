@@ -200,4 +200,18 @@ describe('llvm-bun', () => {
 		expect(ir).toMatch(/icmp sgt/);
 		expect(ir).toMatch(/icmp sge/);
 	});
+	it('getInsertBlock returns the correct block and parent func', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([Type.int32(ctx)], Type.int32(ctx));
+		const fn = mod.createFunction('main', fnType);
+		const entry = fn.addBlock('entry');
+		const builder = new IRBuilder(ctx);
+		builder.insertInto(entry);
+
+		const block = builder.getInsertBlock();
+		expect(block).toBeTruthy();
+		expect(block?.handle).toBe(entry.handle);
+		expect(block?.parent).toBe(fn);
+	});
 })

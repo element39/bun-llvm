@@ -10,6 +10,7 @@ import {
 	LLVMBuildFDiv,
 	LLVMBuildFMul,
 	LLVMBuildFSub,
+	LLVMBuildICmp,
 	LLVMBuildLoad,
 	LLVMBuildMul,
 	LLVMBuildRet,
@@ -24,6 +25,7 @@ import {
 	LLVMDoubleTypeInContext,
 	LLVMFloatTypeInContext,
 	LLVMFunctionType,
+	LLVMGetInsertBlock,
 	LLVMGetIntTypeWidth,
 	LLVMGetParam,
 	LLVMInt16TypeInContext,
@@ -38,8 +40,7 @@ import {
 	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
-  LLVMVoidTypeInContext,
-  LLVMBuildICmp
+	LLVMVoidTypeInContext
 } from "./ffi";
 
 type Pointer = any;
@@ -49,22 +50,18 @@ export enum Linkage {
 	Internal = 1,
 }
 
+
 /**
- context for llvm objects
-*/
+ * context for llvm objects
+ */
 export class Context {
 	private ptr: Pointer;
-
-	/**
-	 create a new context
-	*/
 	constructor() {
 		this.ptr = LLVMContextCreate();
 	}
-
 	/**
-	 get the raw pointer
-	*/
+	 * get the raw pointer
+	 */
 	get handle() { return this.ptr; }
 }
 
@@ -231,16 +228,16 @@ public type?: FunctionType;
 */
 export class BasicBlock {
 	private ptr: Pointer;
-	private func: Func;
+	public readonly parent: Func | undefined;
 
 	/**
 	 create a basic block object
 	 @param ptr pointer to the block
-	 @param func parent function
+	 @param parent parent function
 	*/
-	constructor(ptr: Pointer, func: Func) {
+	constructor(ptr: Pointer, parent?: Func) {
 		this.ptr = ptr;
-		this.func = func;
+		this.parent = parent;
 	}
 
 	/**
@@ -250,6 +247,25 @@ export class BasicBlock {
 }
 
 export class IRBuilder {
+	private _currentFunc?: Func;
+
+	/**
+	 * Set the current function context for this builder
+	 * @param func The function being built
+	 */
+	setCurrentFunc(func: Func) {
+		this._currentFunc = func;
+	}
+
+	/**
+	 * Set where new instructions will be added in the given block
+	 * and track the parent function for getInsertBlock()
+	 * @param bb the block to insert into
+	 */
+	insertInto(bb: BasicBlock): void {
+		LLVMPositionBuilderAtEnd(this.ptr, bb.handle);
+		this._currentFunc = bb.parent;
+	}
 
 	/**
 	 integer comparison equal (==)
@@ -258,6 +274,16 @@ export class IRBuilder {
 		// LLVMIntEQ = 32
 		const valPtr = LLVMBuildICmp(this.ptr, 32, left.handle, right.handle, Buffer.from(name + "\0"));
 		return new Value(valPtr);
+	}
+	/**
+	 * Get the current insertion block
+	 * @returns the BasicBlock currently being inserted into, or undefined if not set
+	 */
+	getInsertBlock(): BasicBlock | undefined {
+		if (typeof LLVMGetInsertBlock !== 'function') throw new Error('LLVMGetInsertBlock FFI not available');
+		const blockPtr = LLVMGetInsertBlock(this.ptr);
+		if (!blockPtr) return undefined;
+		return new BasicBlock(blockPtr, this._currentFunc);
 	}
 	/**
 	 integer comparison not equal (!=)
@@ -323,13 +349,6 @@ export class IRBuilder {
 		this.ptr = LLVMCreateBuilderInContext(context.handle);
 	}
 
-	/**
-	 set where new instructions will be added in the given block
-	 @param bb the block to insert into
-	 */
-	insertInto(bb: BasicBlock): void {
-		LLVMPositionBuilderAtEnd(this.ptr, bb.handle);
-	}
 
 	/**
 	 allocate memory on the stack

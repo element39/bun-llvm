@@ -4,6 +4,7 @@ const lib = dlopen("./LLVM-C.dll", {
   LLVMBuildCall2: { args: ["ptr", "ptr", "ptr", "ptr", "uint32_t", "cstring"], returns: "ptr" },
   LLVMGetNamedFunction: { args: ["ptr", "cstring"], returns: "ptr" },
   LLVMBuildICmp: { args: ["ptr", "int32_t", "ptr", "ptr", "cstring"], returns: "ptr" },
+  LLVMGetInsertBlock: { args: ["ptr"], returns: "ptr" },
 
 	// context & module
 	LLVMContextCreate: { args: [], returns: "ptr" },
@@ -111,5 +112,6 @@ export const {
   ,LLVMGetNamedFunction
   ,LLVMBuildCall2
   ,LLVMBuildICmp
+  ,LLVMGetInsertBlock
 } = lib.symbols;
 
