@@ -22,6 +22,7 @@ import {
 	LLVMConstReal,
 	LLVMContextCreate,
 	LLVMCreateBuilderInContext,
+	LLVMDeleteBasicBlock,
 	LLVMDoubleTypeInContext,
 	LLVMFloatTypeInContext,
 	LLVMFunctionType,
@@ -128,9 +129,9 @@ private _funcs: Map<string, Func> = new Map();
 	 @param name function name
 	 @returns the function object or undefined if not found
 	*/
-  getFunction(name: string): Func | undefined {
-	return this._funcs.get(name);
-  }
+	getFunction(name: string): Func | undefined {
+		return this._funcs.get(name);
+	}
 }
 
 /**
@@ -244,6 +245,15 @@ export class BasicBlock {
 	 get the raw pointer
 	*/
 	get handle() { return this.ptr; }
+
+	/**
+	 * Erase this block from its parent function
+	 */
+	erase(): void {
+		if (!this.parent) return;
+		LLVMDeleteBasicBlock(this.ptr);
+		this.ptr = null;
+	}
 }
 
 export class IRBuilder {

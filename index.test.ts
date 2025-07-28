@@ -214,4 +214,14 @@ describe('llvm-bun', () => {
 		expect(block?.handle).toBe(entry.handle);
 		expect(block?.parent).toBe(fn);
 	});
+	it('BasicBlock.erase removes the block and sets handle to null', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([], Type.void(ctx));
+		const fn = mod.createFunction('main', fnType);
+		const block = fn.addBlock('entry');
+		expect(block.handle).toBeTruthy();
+		block.erase();
+		expect(block.handle).toBeNull();
+	});
 })

@@ -1,10 +1,10 @@
 import { dlopen } from "bun:ffi";
 
 const lib = dlopen("./LLVM-C.dll", {
-  LLVMBuildCall2: { args: ["ptr", "ptr", "ptr", "ptr", "uint32_t", "cstring"], returns: "ptr" },
-  LLVMGetNamedFunction: { args: ["ptr", "cstring"], returns: "ptr" },
-  LLVMBuildICmp: { args: ["ptr", "int32_t", "ptr", "ptr", "cstring"], returns: "ptr" },
-  LLVMGetInsertBlock: { args: ["ptr"], returns: "ptr" },
+	LLVMBuildCall2: { args: ["ptr", "ptr", "ptr", "ptr", "uint32_t", "cstring"], returns: "ptr" },
+	LLVMGetNamedFunction: { args: ["ptr", "cstring"], returns: "ptr" },
+	LLVMBuildICmp: { args: ["ptr", "int32_t", "ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMGetInsertBlock: { args: ["ptr"], returns: "ptr" },
 
 	// context & module
 	LLVMContextCreate: { args: [], returns: "ptr" },
@@ -29,6 +29,7 @@ const lib = dlopen("./LLVM-C.dll", {
 	LLVMFunctionType: { args: ["ptr", "ptr", "uint32_t", "bool"], returns: "ptr" },
 	LLVMAddFunction: { args: ["ptr", "cstring", "ptr"], returns: "ptr" },
 	LLVMAppendBasicBlockInContext: { args: ["ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMDeleteBasicBlock: { args: ["ptr"], returns: "void" },
 	LLVMGetParam: { args: ["ptr", "uint32_t"], returns: "ptr" },
 
 	// ir building
@@ -59,8 +60,9 @@ const lib = dlopen("./LLVM-C.dll", {
 	LLVMPrintModuleToString: { args: ["ptr"], returns: "cstring" },
 	LLVMVerifyFunction: { args: ["ptr", "uint32_t"], returns: "int" },
 	LLVMVerifyModule: { args: ["ptr", "uint32_t", "ptr"], returns: "int" },
-  // introspection
-  LLVMGetIntTypeWidth: { args: ["ptr"], returns: "uint32_t" },
+
+	// introspection
+	LLVMGetIntTypeWidth: { args: ["ptr"], returns: "uint32_t" },
 	LLVMTypeOf: { args: ["ptr"], returns: "ptr" }
 });
 
@@ -83,6 +85,7 @@ export const {
 	LLVMAddFunction,
 	LLVMAppendBasicBlockInContext,
 	LLVMGetParam,
+	LLVMDeleteBasicBlock,
 	LLVMBuildRet,
 	
 	LLVMBuildAdd,
@@ -114,4 +117,3 @@ export const {
   ,LLVMBuildICmp
   ,LLVMGetInsertBlock
 } = lib.symbols;
-
