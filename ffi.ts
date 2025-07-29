@@ -36,6 +36,7 @@ const lib = dlopen("./LLVM-C.dll", {
 	LLVMAppendBasicBlockInContext: { args: ["ptr", "ptr", "cstring"], returns: "ptr" },
 	LLVMDeleteBasicBlock: { args: ["ptr"], returns: "void" },
 	LLVMGetParam: { args: ["ptr", "uint32_t"], returns: "ptr" },
+	LLVMSetLinkage: { args: ["ptr", "int32_t"], returns: "void" },
 
 	// ir building
 	LLVMPositionBuilderAtEnd: { args: ["ptr", "ptr"], returns: "void" },
@@ -65,6 +66,7 @@ const lib = dlopen("./LLVM-C.dll", {
 	LLVMPrintModuleToString: { args: ["ptr"], returns: "cstring" },
 	LLVMVerifyFunction: { args: ["ptr", "uint32_t"], returns: "int" },
 	LLVMVerifyModule: { args: ["ptr", "uint32_t", "ptr"], returns: "int" },
+	LLVMBuildBitCast: { args: ["ptr", "ptr", "ptr", "cstring"], returns: "ptr" },
 
 	// introspection
 	LLVMGetIntTypeWidth: { args: ["ptr"], returns: "uint32_t" },
@@ -92,6 +94,7 @@ export const {
 	LLVMGetParam,
 	LLVMDeleteBasicBlock,
 	LLVMBuildRet,
+	LLVMSetLinkage,
 	
 	LLVMBuildAdd,
 	LLVMBuildFAdd,
@@ -125,5 +128,6 @@ export const {
 	LLVMArrayType,
 	LLVMAddGlobal,
 	LLVMSetInitializer,
-	LLVMSetGlobalConstant
+	LLVMSetGlobalConstant,
+	LLVMBuildBitCast
 } = lib.symbols;

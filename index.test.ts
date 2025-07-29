@@ -2,6 +2,38 @@ import { describe, expect, it } from 'vitest';
 import LLVM, { Context, IRBuilder, Module, Type, Value } from './index';
 
 describe('llvm-bun', () => {
+	it('bitcasts between pointer types', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([], Type.void(ctx));
+		const fn = mod.createFunction('main', fnType);
+		const entry = fn.addBlock('entry');
+		const builder = new IRBuilder(ctx);
+		builder.insertInto(entry);
+		const i8 = Type.int8(ctx);
+		const ptrType = Type.pointer(i8);
+		const ptr = builder.alloca(i8, 'ptr');
+		// Bitcast to another pointer type (e.g., i32*)
+		const i32 = Type.int32(ctx);
+		const ptrI32 = Type.pointer(i32);
+		const casted = builder.bitcast(ptr, ptrI32, 'casted');
+		expect(casted.handle).toBeTruthy();
+		expect(casted.getType().isPointer()).toBe(true);
+		builder.ret();
+		const ir = mod.toString();
+		expect(ir).toMatch(/bitcast/);
+	});
+
+	it('createFunction sets linkage option', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const fnType = new LLVM.FunctionType([], Type.void(ctx));
+		// Internal linkage
+		const fn = mod.createFunction('internal_func', fnType, { linkage: LLVM.Linkage.Internal });
+		expect(fn.handle).toBeTruthy();
+		const ir = mod.toString();
+		expect(ir).toMatch(/internal/);
+	});
 	it('adds a global string constant', () => {
 		const ctx = new Context();
 		const mod = new Module('test', ctx);

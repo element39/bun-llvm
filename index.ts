@@ -5,6 +5,7 @@ import {
 	LLVMArrayType,
 	LLVMBuildAdd,
 	LLVMBuildAlloca,
+	LLVMBuildBitCast,
 	LLVMBuildBr,
 	LLVMBuildCall2,
 	LLVMBuildCondBr,
@@ -43,6 +44,7 @@ import {
 	LLVMPrintModuleToString,
 	LLVMSetGlobalConstant,
 	LLVMSetInitializer,
+	LLVMSetLinkage,
 	LLVMTypeOf,
 	LLVMVerifyFunction,
 	LLVMVerifyModule,
@@ -120,6 +122,10 @@ private _funcs: Map<string, Func> = new Map();
 	*/
   createFunction(name: string, fnType: FunctionType, opts?: { linkage?: Linkage }): Func {
 	const fnPtr = LLVMAddFunction(this.ptr, Buffer.from(name + "\0"), fnType.handle);
+	if (!fnPtr) throw new Error(`failed to add function ${name} with type ${fnType.handle}`);
+
+	LLVMSetLinkage(fnPtr, opts?.linkage || Linkage.External);
+
 	const func = new Func(fnPtr, this, fnType);
 	(func as any)._paramCount = fnType.params.length;
 	this._funcs.set(name, func);
@@ -284,6 +290,17 @@ export class BasicBlock {
 }
 
 export class IRBuilder {
+	/**
+	 * Bitcast a value to another type (pointer or int of same width)
+	 * @param value The value to cast
+	 * @param destType The destination type
+	 * @param name Optional name for the result
+	 * @returns The casted value
+	 */
+	bitcast(value: Value, destType: Type, name = "bitcasttmp"): Value {
+		const ptr = LLVMBuildBitCast(this.ptr, value.handle, destType.handle, Buffer.from(name + "\0"));
+		return new Value(ptr, destType);
+	}
 	private _currentFunc?: Func;
 
 	/**
