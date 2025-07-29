@@ -1,7 +1,17 @@
-import { describe, expect, it } from 'vitest'
-import LLVM, { Context, IRBuilder, Module, Type, Value } from './index'
+import { describe, expect, it } from 'vitest';
+import LLVM, { Context, IRBuilder, Module, Type, Value } from './index';
 
 describe('llvm-bun', () => {
+	it('adds a global string constant', () => {
+		const ctx = new Context();
+		const mod = new Module('test', ctx);
+		const strVal = mod.addGlobalString('hello world');
+		const t = strVal.getType();
+		expect(t.isPointer()).toBe(true);
+		const ir = mod.toString();
+		expect(ir).toMatch(/hello world/);
+		expect(ir).toMatch(/constant/);
+	});
 	it('creates a context and module', () => {
 		const ctx = new Context()
 		const mod = new Module('test', ctx)
@@ -53,7 +63,6 @@ describe('llvm-bun', () => {
 		expect(ir).toMatch(/define i32 @add/)
 		expect(ir).toMatch(/add i32/)
 	})
-
 	it('creates and inspects constants', () => {
 		const ctx = new Context()
 		const i32 = Type.int32(ctx)
@@ -62,7 +71,6 @@ describe('llvm-bun', () => {
 		const t = v.getType()
 		expect(t.isInt(32)).toBe(true)
 	})
-
 	it('alloca, store, load', () => {
 		const ctx = new Context()
 		const mod = new Module('test', ctx)

@@ -1,6 +1,11 @@
 import { dlopen } from "bun:ffi";
 
 const lib = dlopen("./LLVM-C.dll", {
+	LLVMConstStringInContext: { args: ["ptr", "cstring", "uint32_t", "bool"], returns: "ptr" },
+	LLVMArrayType: { args: ["ptr", "uint32_t"], returns: "ptr" },
+	LLVMAddGlobal: { args: ["ptr", "ptr", "cstring"], returns: "ptr" },
+	LLVMSetInitializer: { args: ["ptr", "ptr"], returns: "void" },
+	LLVMSetGlobalConstant: { args: ["ptr", "bool"], returns: "void" },
 	LLVMBuildCall2: { args: ["ptr", "ptr", "ptr", "ptr", "uint32_t", "cstring"], returns: "ptr" },
 	LLVMGetNamedFunction: { args: ["ptr", "cstring"], returns: "ptr" },
 	LLVMBuildICmp: { args: ["ptr", "int32_t", "ptr", "ptr", "cstring"], returns: "ptr" },
@@ -111,9 +116,14 @@ export const {
 	LLVMGetIntTypeWidth,
 	LLVMBuildAlloca,
 	LLVMBuildStore,
-	LLVMBuildLoad
-  ,LLVMGetNamedFunction
-  ,LLVMBuildCall2
-  ,LLVMBuildICmp
-  ,LLVMGetInsertBlock
+	LLVMBuildLoad,
+	LLVMGetNamedFunction,
+	LLVMBuildCall2,
+	LLVMBuildICmp,
+	LLVMGetInsertBlock,
+	LLVMConstStringInContext,
+	LLVMArrayType,
+	LLVMAddGlobal,
+	LLVMSetInitializer,
+	LLVMSetGlobalConstant
 } = lib.symbols;
